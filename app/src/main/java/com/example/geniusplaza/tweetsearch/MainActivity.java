@@ -5,6 +5,8 @@ import android.os.Bundle;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -13,10 +15,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.geniusplaza.tweetsearch.Objects.OAuthToken;
+import com.example.geniusplaza.tweetsearch.Objects.Tweet;
+import com.example.geniusplaza.tweetsearch.Objects.TweetList;
 import com.example.geniusplaza.tweetsearch.Objects.UserDetails;
 import com.example.geniusplaza.tweetsearch.Retrofit.TwitterApi;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Credentials;
 import okhttp3.Interceptor;
@@ -30,12 +36,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String credentials = Credentials.basic("ZtK3ye7mf2PeDbWLaxLhnGFCS", "FNnWsLYlQT7DK3kt04Q7hDmoFXUZE1R6qk4UlVaXjZMq6SNCWy");
+    private String credentials = Credentials.basic(ApiConstants.CONSUMER_KEY, ApiConstants.CONSUMER_SECRET);
 
     Button requestTokenButton;
     Button requestUserDetailsButton;
     EditText usernameEditText;
     TextView usernameTextView;
+    List<Tweet> mTweets = new ArrayList<Tweet>();
+    RecyclerView mRecyclerView;
+    LinearLayoutManager mLinearLayoutManager;
+    TweetsAdapter mAdapter;
 
     TextView nameTextView;
     TextView locationTextView;
@@ -54,11 +64,21 @@ public class MainActivity extends AppCompatActivity {
         requestUserDetailsButton = (Button) findViewById(R.id.request_user_details_button);
         usernameEditText = (EditText) findViewById(R.id.username_edittext);
         usernameTextView = (TextView) findViewById(R.id.username_textview);
-
+        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         nameTextView = (TextView) findViewById(R.id.name_textview);
-        locationTextView = (TextView) findViewById(R.id.location_textview);
-        urlTextView = (TextView) findViewById(R.id.url_textview);
-        descriptionTextView = (TextView) findViewById(R.id.description_textview);
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+
+        mRecyclerView.setHasFixedSize(false);
+        mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mAdapter = new TweetsAdapter(this, mTweets);
+        mRecyclerView.setAdapter(mAdapter);
+
+        //locationTextView = (TextView) findViewById(R.id.location_textview);
+        //urlTextView = (TextView) findViewById(R.id.url_textview);
+        //descriptionTextView = (TextView) findViewById(R.id.description_textview);
 
         createTwitterApi();
     }
@@ -95,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 String editTextInput = usernameEditText.getText().toString();
                 if (!editTextInput.isEmpty()) {
                     twitterApi.getUserDetails(editTextInput).enqueue(userDetailsCallback);
+                    twitterApi.callbackgetTweetList(editTextInput, "music").enqueue(tweetListCallback);
                 } else {
                     Toast.makeText(this, "Please provide a username", Toast.LENGTH_LONG).show();
                 }
@@ -130,9 +151,7 @@ public class MainActivity extends AppCompatActivity {
                 UserDetails userDetails = response.body();
 
                 nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
-                locationTextView.setText(userDetails.getLocation() == null ? "no value" : userDetails.getLocation());
-                urlTextView.setText(userDetails.getUrl() == null ? "no value" : userDetails.getUrl());
-                descriptionTextView.setText(userDetails.getDescription().isEmpty() ? "no value" : userDetails.getDescription());
+
             } else {
                 Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
                 Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
@@ -143,5 +162,32 @@ public class MainActivity extends AppCompatActivity {
         public void onFailure(Call<UserDetails> call, Throwable t) {
             t.printStackTrace();
         }
+    };
+
+    Callback<TweetList> tweetListCallback = new Callback<TweetList>() {
+        @Override
+        public void onResponse(Call<TweetList> call, Response<TweetList> response) {
+            if (response.isSuccessful()) {
+                mAdapter.updateData(response.body());
+                //TweetList tweetList = response.body();
+                Log.d("List Loaded", "Method test");
+                //nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
+                //locationTextView.setText(userDetails.getLocation() == null ? "no value" : userDetails.getLocation());
+                //urlTextView.setText(userDetails.getUrl() == null ? "no value" : userDetails.getUrl());
+                //descriptionTextView.setText(userDetails.getDescription().isEmpty() ? "no value" : userDetails.getDescription());
+            } else {
+                Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
+                Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
+            }
+        }
+
+        @Override
+        public void onFailure(Call<TweetList> call, Throwable t) {
+            t.printStackTrace();
+        }
+
+
+
+
     };
 }

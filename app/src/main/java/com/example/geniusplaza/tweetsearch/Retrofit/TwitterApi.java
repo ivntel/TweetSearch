@@ -4,10 +4,16 @@ package com.example.geniusplaza.tweetsearch.Retrofit;
  * Created by geniusplaza on 6/8/17.
  */
 
+import com.example.geniusplaza.tweetsearch.ApiConstants;
 import com.example.geniusplaza.tweetsearch.Objects.OAuthToken;
+import com.example.geniusplaza.tweetsearch.Objects.Tweet;
+import com.example.geniusplaza.tweetsearch.Objects.TweetList;
 import com.example.geniusplaza.tweetsearch.Objects.UserDetails;
 
+import java.util.List;
+
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
@@ -26,10 +32,6 @@ public interface TwitterApi {
     @GET("/1.1/users/show.json")
     Call<UserDetails> getUserDetails(@Query("screen_name") String name);
 
-    /*@GET(ApiConstants.TWITTER_HASHTAG_SEARCH_CODE )
-    void getTweetList(
-            @Header("Authorization") String authorization,
-            @Query("q") String hashtag,
-            Callback<TweetList> callback
-    );*/
+    @GET(ApiConstants.TWITTER_HASHTAG_SEARCH_CODE )
+    Call<TweetList> callbackgetTweetList(@Header("Authorization") String authorization, @Query("q") String hashtag);
 }
