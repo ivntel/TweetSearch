@@ -9,7 +9,7 @@ import com.example.geniusplaza.tweetsearch.Objects.OAuthToken;
 import com.example.geniusplaza.tweetsearch.Objects.Tweet;
 import com.example.geniusplaza.tweetsearch.Objects.TweetList;
 import com.example.geniusplaza.tweetsearch.Objects.UserDetails;
-
+import io.reactivex.Observable;
 import java.util.List;
 
 import retrofit2.Call;
@@ -27,11 +27,11 @@ public interface TwitterApi {
 
     @FormUrlEncoded
     @POST("oauth2/token")
-    Call<OAuthToken> postCredentials(@Field("grant_type") String grantType);
+    Observable<OAuthToken> postCredentials(@Field("grant_type") String grantType);
 
     @GET("/1.1/users/show.json")
-    Call<UserDetails> getUserDetails(@Query("screen_name") String name);
+    Observable<UserDetails> getUserDetails(@Query("screen_name") String name);
 
     @GET(ApiConstants.TWITTER_HASHTAG_SEARCH_CODE )
-    Call<TweetList> callbackgetTweetList(@Header("Authorization") String authorization, @Query("q") String hashtag);
+    Observable<TweetList> callbackgetTweetList(@Header("Authorization") String authorization, @Query("q") String hashtag);
 }

@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.Credentials;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -32,6 +35,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
@@ -48,10 +52,6 @@ public class MainActivity extends AppCompatActivity {
     TweetsAdapter mAdapter;
 
     TextView nameTextView;
-    TextView locationTextView;
-    TextView urlTextView;
-    TextView descriptionTextView;
-
     TwitterApi twitterApi;
     OAuthToken token;
 
@@ -76,9 +76,6 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new TweetsAdapter(this, mTweets);
         mRecyclerView.setAdapter(mAdapter);
 
-        //locationTextView = (TextView) findViewById(R.id.location_textview);
-        //urlTextView = (TextView) findViewById(R.id.url_textview);
-        //descriptionTextView = (TextView) findViewById(R.id.description_textview);
 
         createTwitterApi();
     }
@@ -101,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(TwitterApi.BASE_URL)
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
 
         twitterApi = retrofit.create(TwitterApi.class);
@@ -109,13 +107,59 @@ public class MainActivity extends AppCompatActivity {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.request_token_button:
-                twitterApi.postCredentials("client_credentials").enqueue(tokenCallback);
+                //twitterApi.postCredentials("client_credentials").enqueue(tokenCallback);
+                rxJavaPost();
                 break;
             case R.id.request_user_details_button:
                 String editTextInput = usernameEditText.getText().toString();
                 if (!editTextInput.isEmpty()) {
-                    twitterApi.getUserDetails(editTextInput).enqueue(userDetailsCallback);
-                    twitterApi.callbackgetTweetList(editTextInput, "music").enqueue(tweetListCallback);
+                    //twitterApi.getUserDetails(editTextInput).enqueue(userDetailsCallback);
+                    //twitterApi.callbackgetTweetList(editTextInput, "music").enqueue(tweetListCallback);
+                    twitterApi.getUserDetails(editTextInput).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new io.reactivex.Observer<UserDetails>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(UserDetails value) {
+                            UserDetails userDetails = value;
+
+                            nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
+                    twitterApi.callbackgetTweetList(editTextInput, "music").subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new io.reactivex.Observer<TweetList>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(TweetList value) {
+                            mAdapter.updateData(value);
+                            Log.d("List Loaded", "Method test");
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
                 } else {
                     Toast.makeText(this, "Please provide a username", Toast.LENGTH_LONG).show();
                 }
@@ -123,71 +167,91 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    Callback<OAuthToken> tokenCallback = new Callback<OAuthToken>() {
-        @Override
-        public void onResponse(Call<OAuthToken> call, Response<OAuthToken> response) {
-            if (response.isSuccessful()) {
+//    Callback<OAuthToken> tokenCallback = new Callback<OAuthToken>() {
+//        @Override
+//        public void onResponse(Call<OAuthToken> call, Response<OAuthToken> response) {
+//            if (response.isSuccessful()) {
+//                requestTokenButton.setEnabled(false);
+//                requestUserDetailsButton.setEnabled(true);
+//                usernameTextView.setEnabled(true);
+//                usernameEditText.setEnabled(true);
+//                token = response.body();
+//            } else {
+//                Toast.makeText(MainActivity.this, "Failure while requesting token", Toast.LENGTH_LONG).show();
+//                Log.d("RequestTokenCallback", "Code: " + response.code() + "Message: " + response.message());
+//            }
+//        }
+//
+//        @Override
+//        public void onFailure(Call<OAuthToken> call, Throwable t) {
+//            t.printStackTrace();
+//        }
+//    };
+
+    public void rxJavaPost() {
+        twitterApi.postCredentials("client_credentials").subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new io.reactivex.Observer<OAuthToken>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(OAuthToken value) {
                 requestTokenButton.setEnabled(false);
                 requestUserDetailsButton.setEnabled(true);
                 usernameTextView.setEnabled(true);
                 usernameEditText.setEnabled(true);
-                token = response.body();
-            } else {
+                token = value;
+            }
+
+            @Override
+            public void onError(Throwable e) {
                 Toast.makeText(MainActivity.this, "Failure while requesting token", Toast.LENGTH_LONG).show();
-                Log.d("RequestTokenCallback", "Code: " + response.code() + "Message: " + response.message());
             }
-        }
 
-        @Override
-        public void onFailure(Call<OAuthToken> call, Throwable t) {
-            t.printStackTrace();
-        }
-    };
+            @Override
+            public void onComplete() {
 
-    Callback<UserDetails> userDetailsCallback = new Callback<UserDetails>() {
-        @Override
-        public void onResponse(Call<UserDetails> call, Response<UserDetails> response) {
-            if (response.isSuccessful()) {
-                UserDetails userDetails = response.body();
-
-                nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
-
-            } else {
-                Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
-                Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
             }
-        }
-
-        @Override
-        public void onFailure(Call<UserDetails> call, Throwable t) {
-            t.printStackTrace();
-        }
-    };
-
-    Callback<TweetList> tweetListCallback = new Callback<TweetList>() {
-        @Override
-        public void onResponse(Call<TweetList> call, Response<TweetList> response) {
-            if (response.isSuccessful()) {
-                mAdapter.updateData(response.body());
-                //TweetList tweetList = response.body();
-                Log.d("List Loaded", "Method test");
-                //nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
-                //locationTextView.setText(userDetails.getLocation() == null ? "no value" : userDetails.getLocation());
-                //urlTextView.setText(userDetails.getUrl() == null ? "no value" : userDetails.getUrl());
-                //descriptionTextView.setText(userDetails.getDescription().isEmpty() ? "no value" : userDetails.getDescription());
-            } else {
-                Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
-                Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
-            }
-        }
-
-        @Override
-        public void onFailure(Call<TweetList> call, Throwable t) {
-            t.printStackTrace();
-        }
-
-
-
-
-    };
+        });
+    }
 }
+//    Callback<UserDetails> userDetailsCallback = new Callback<UserDetails>() {
+//        @Override
+//        public void onResponse(Call<UserDetails> call, Response<UserDetails> response) {
+//            if (response.isSuccessful()) {
+//                UserDetails userDetails = response.body();
+//
+//                nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
+//
+//            } else {
+//                Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
+//                Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
+//            }
+//        }
+//
+//        @Override
+//        public void onFailure(Call<UserDetails> call, Throwable t) {
+//            t.printStackTrace();
+//        }
+//    };
+
+//    Callback<TweetList> tweetListCallback = new Callback<TweetList>() {
+//        @Override
+//        public void onResponse(Call<TweetList> call, Response<TweetList> response) {
+//            if (response.isSuccessful()) {
+//                mAdapter.updateData(response.body());
+//                Log.d("List Loaded", "Method test");
+//
+//            } else {
+//                Toast.makeText(MainActivity.this, "Failure while requesting user details", Toast.LENGTH_LONG).show();
+//                Log.d("UserDetailsCallback", "Code: " + response.code() + "Message: " + response.message());
+//            }
+//        }
+//
+//        @Override
+//        public void onFailure(Call<TweetList> call, Throwable t) {
+//            t.printStackTrace();
+//        }
+//    };
+//}

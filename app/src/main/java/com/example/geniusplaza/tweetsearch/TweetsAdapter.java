@@ -7,6 +7,8 @@ package com.example.geniusplaza.tweetsearch;
 import android.content.Context;
 //import android.databinding.DataBindingUtil;
 //import android.databinding.ViewDataBinding;
+import android.databinding.DataBindingUtil;
+import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -56,15 +58,11 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
 
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_tweets, parent, false);
-        //ViewHolder vh = new ViewHolder(v);
-        //return new ViewHolder(v, binding);
-//        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-//        ViewDataBinding binding = DataBindingUtil.inflate(layoutInflater, R.layout.row_tweets, parent, false);
-//        return new ViewHolder(binding);
-        return new ViewHolder(v);
+        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
+        ViewDataBinding binding = DataBindingUtil.inflate(layoutInflater, R.layout.row_tweets, parent, false);
+        return new ViewHolder(binding);
+
     }
     //Replace contents of a view(invoked by the layout manager)
     @Override
@@ -72,11 +70,9 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
 
         final Tweet tweet = mTweet.get(position);
         Log.d("PostAdapter",tweet.getText().toString() );
-        holder.rowId.setText(tweet.getText().toString());
-        //Log.d("PostAdapter", "Bind success!");
-        //holder.bind(tweet);
-        //holder.rowSong.setText(song.getSongName());
-        //Glide.with(mContext).load(song.getArtistUrl()).into(holder.rowImage);
+
+        holder.bind(tweet);
+
     }
     // Replace the contents of a view (invoked by the layout manager)
 
@@ -85,20 +81,15 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         //LinearLayout rowLayout;
-        //private final ViewDataBinding binding;
-        public TextView rowId;
+        private final ViewDataBinding binding;
 
-        public ViewHolder(View v) {
-            super(v);
-            //super(binding.getRoot());
-            //rowLayout = (LinearLayout) v.findViewById(R.id.row_layout);
-            rowId = (TextView) v.findViewById(R.id.row_id);
-            //binding = DataBindingUtil.bind(post_contents_row);
-            //this.binding = binding;
+        public ViewHolder(ViewDataBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
-//        public void bind (Object obj){
-//            //binding.setVariable(com.example.geniusplaza.sample.BR.obj, obj);
-//            //binding.executePendingBindings();
-//        }
+        public void bind (Object obj){
+            binding.setVariable(com.example.geniusplaza.tweetsearch.BR.obj, obj);
+            binding.executePendingBindings();
+        }
     }
 }
