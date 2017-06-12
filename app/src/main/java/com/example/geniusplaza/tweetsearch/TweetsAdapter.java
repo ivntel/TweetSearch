@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import com.example.geniusplaza.tweetsearch.Objects.Tweet;
 import com.example.geniusplaza.tweetsearch.Objects.TweetList;
+import com.bumptech.glide.Glide;
+import com.example.geniusplaza.tweetsearch.Objects.TwitterUser;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
 
     private List<Tweet> mTweet;
     private Context mContext;
+    //private TwitterUser mTwitterUser;
 
     public static final String TAG = TweetsAdapter.class.getSimpleName();
 
@@ -72,6 +75,8 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
         Log.d("PostAdapter",tweet.getText().toString() );
 
         holder.bind(tweet);
+        //Glide.with(mContext).load(mTwitterUser.getProfileImageUrl()).into(holder.profile_pic);
+
 
     }
     // Replace the contents of a view (invoked by the layout manager)

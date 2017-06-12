@@ -11,12 +11,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.geniusplaza.tweetsearch.Objects.OAuthToken;
 import com.example.geniusplaza.tweetsearch.Objects.Tweet;
 import com.example.geniusplaza.tweetsearch.Objects.TweetList;
+import com.example.geniusplaza.tweetsearch.Objects.TwitterUser;
 import com.example.geniusplaza.tweetsearch.Objects.UserDetails;
 import com.example.geniusplaza.tweetsearch.Retrofit.TwitterApi;
 
@@ -47,10 +50,11 @@ public class MainActivity extends AppCompatActivity {
     EditText usernameEditText;
     TextView usernameTextView;
     List<Tweet> mTweets = new ArrayList<Tweet>();
+    TwitterUser mTwitterUser;
     RecyclerView mRecyclerView;
     LinearLayoutManager mLinearLayoutManager;
     TweetsAdapter mAdapter;
-
+    ImageView profileImage;
     TextView nameTextView;
     TwitterApi twitterApi;
     OAuthToken token;
@@ -63,10 +67,11 @@ public class MainActivity extends AppCompatActivity {
         requestTokenButton = (Button) findViewById(R.id.request_token_button);
         requestUserDetailsButton = (Button) findViewById(R.id.request_user_details_button);
         usernameEditText = (EditText) findViewById(R.id.username_edittext);
+
         usernameTextView = (TextView) findViewById(R.id.username_textview);
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         nameTextView = (TextView) findViewById(R.id.name_textview);
-
+        profileImage = (ImageView)findViewById(R.id.profile_img);
         mLinearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
 
@@ -112,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.request_user_details_button:
                 String editTextInput = usernameEditText.getText().toString();
+                //Glide.with(getApplicationContext()).load(mTwitterUser.getProfileImageUrl()).into(profileImage);
                 if (!editTextInput.isEmpty()) {
                     //twitterApi.getUserDetails(editTextInput).enqueue(userDetailsCallback);
                     //twitterApi.callbackgetTweetList(editTextInput, "music").enqueue(tweetListCallback);
@@ -126,6 +132,29 @@ public class MainActivity extends AppCompatActivity {
                             UserDetails userDetails = value;
 
                             nameTextView.setText(userDetails.getName() == null ? "no value" : userDetails.getName());
+                            //Glide.with(getApplicationContext()).load(mTwitterUser.getProfileImageUrl()).into(profileImage);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
+                    twitterApi.getTwitterUserDetail(editTextInput,editTextInput).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new io.reactivex.Observer<TwitterUser>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(TwitterUser value) {
+                            TwitterUser twitterUser = value;
+                            Glide.with(getApplicationContext()).load(twitterUser.getProfileImageUrl()).into(profileImage);
                         }
 
                         @Override
